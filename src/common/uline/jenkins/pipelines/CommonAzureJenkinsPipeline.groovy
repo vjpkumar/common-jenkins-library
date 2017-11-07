@@ -36,7 +36,7 @@ void initialize() {
             
     echo "###################################### GET NODE LABEL DYNAMICALLY ::: START #########################################################"
       
-    autoNodeLabel = privisionAzureSlaveSH()
+    autoNodeLabel = provisionAzureSlave()
     
     echo "NODE LABEL IS: $autoNodeLabel"
     echo "###################################### GET NODE LABEL DYNAMICALLY ::: END ###########################################################"
@@ -84,7 +84,8 @@ String provisionAzureSlave() {
             .endTemplate()
         .build()
     
-    
+    Jenkins.getInstance().clouds.add(myCloud)
+	
     echo " aciCloud:: NAME:::  "+myCloud.getName()
     echo " aciCloud:: CREDENTIAL ID:::  "+myCloud.getCredentialsId()
     echo " aciCloud:: RESOURCE:::  "+myCloud.getResourceGroup()
