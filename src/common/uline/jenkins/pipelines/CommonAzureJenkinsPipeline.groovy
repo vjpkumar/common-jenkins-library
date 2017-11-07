@@ -105,6 +105,7 @@ String provisionAzureSlave() {
     for(NodeProvisioner.PlannedNode plannedNode: plannedNodes){
         
         echo " plannedNode Display Name: "+plannedNode.displayName
+	plannedNode.call()    
         
         //slave = plannedNode.displayName
         slave = baseTemplate.getLabel()
