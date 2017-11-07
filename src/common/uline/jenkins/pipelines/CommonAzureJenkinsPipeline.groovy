@@ -55,7 +55,8 @@ void initialize() {
             
     echo "###################################### GET NODE LABEL DYNAMICALLY ::: START #########################################################"
       
-    autoNodeLabel = provisionAzureSlave()
+    //autoNodeLabel = provisionAzureSlave()
+     autoNodeLabel = "demolabel"
     
     echo "NODE LABEL IS: $autoNodeLabel"
     echo "###################################### GET NODE LABEL DYNAMICALLY ::: END ###########################################################"
@@ -131,7 +132,7 @@ String provisionAzureSlave() {
         slave = baseTemplate.getLabel()
     }
     */
-	
+/**	
     NodeProvisioner.PlannedNode plannedNode = 
 	new NodeProvisioner.PlannedNode(
 	    template.getName(), 
@@ -184,7 +185,7 @@ String provisionAzureSlave() {
 			}
 		    }
 		}
-		), 1)
+		), 1) */
     
      return slave
 }
