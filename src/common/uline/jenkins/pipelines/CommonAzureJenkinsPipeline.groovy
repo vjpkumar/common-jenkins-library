@@ -7,6 +7,7 @@ import com.microsoft.jenkins.containeragents.aci.AciContainerTemplate
 import com.microsoft.jenkins.containeragents.builders.AciCloudBuilder
 import com.microsoft.jenkins.containeragents.aci.AciCloud
 import com.microsoft.jenkins.containeragents.aci.AciAgent
+import com.microsoft.azure.util.AzureCredentials
 import com.microsoft.jenkins.containeragents.strategy.ContainerOnceRetentionStrategy
 import com.microsoft.azure.management.Azure
 
@@ -79,7 +80,10 @@ String provisionAzureSlave() {
     
     
     echo " aciCloud:: NAME:::  "+myCloud.getName()
+    echo " aciCloud:: CREDENTIAL ID:::  "+myCloud.getCredentialsId()
+    echo " aciCloud:: RESOURCE:::  "+myCloud.getResourceGroup()
     echo " aciCloud:: TEMPLATES:::  "+myCloud.getTemplates()
+    echo " aciCloud:: SUBSCRIPTION ID:::  "+AzureCredentials.getServicePrincipal(myCloud.getCredentialsId()).getSubscriptionId()
     
     AciContainerTemplate template = myCloud.getFirstTemplate(null)
     String templateName = template.getName()
