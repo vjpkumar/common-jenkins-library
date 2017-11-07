@@ -139,46 +139,46 @@ String provisionAzureSlave() {
 		new Callable<Node>() {
 		    @Override
 		    public Node call() throws Exception {
-			AciAgent agent = null;
-			final Map<String, String> properties = new HashMap<>();
+			AciAgent agent = null
+			final Map<String, String> properties = new HashMap<>()
 
 			try {
-			    agent = new AciAgent(myCloud, template);
+			    agent = new AciAgent(myCloud, template)
 			    
 			    echo "AGENT NODE NAME: "+agent.getNodeName()
-			    Jenkins.getInstance().addNode(agent);
+			    Jenkins.getInstance().addNode(agent)
 
 			    //start a timeWatcher
-			    StopWatch stopWatch = new StopWatch();
-			    stopWatch.start();
+			    StopWatch stopWatch = new StopWatch()
+			    stopWatch.start()
 
 			    //BI properties
 			    properties.put(AppInsightsConstants.AZURE_SUBSCRIPTION_ID,AzureCredentials.getServicePrincipal(myCloud.getCredentialsId()).getSubscriptionId());
-			    properties.put(Constants.AI_ACI_NAME, agent.getNodeName());
-			    properties.put(Constants.AI_ACI_CPU_CORE, template.getCpu());
+			    properties.put(Constants.AI_ACI_NAME, agent.getNodeName())
+			    properties.put(Constants.AI_ACI_CPU_CORE, template.getCpu())
 
 			    //Deploy ACI and wait
-			    template.provisionAgents(myCloud, agent, stopWatch);
+			    template.provisionAgents(myCloud, agent, stopWatch)
 
 			    //wait JNLP to online
-			    waitToOnline(agent, template.getTimeout(), stopWatch);
+			    waitToOnline(agent, template.getTimeout(), stopWatch)
 
-			    provisionRetryStrategy.success(template.getName());
+			    provisionRetryStrategy.success(template.getName())
 
 			    //Send BI
-			    ContainerPlugin.sendEvent(Constants.AI_ACI_AGENT, "Provision", properties);
+			    ContainerPlugin.sendEvent(Constants.AI_ACI_AGENT, "Provision", properties)
 
 			    return agent
 			} catch (Exception e) {
 			    echo "EXCEPTION: "+e.getMessage()			    
 			    properties.put("Message", e.getMessage());
-			    ContainerPlugin.sendEvent(Constants.AI_ACI_AGENT, "ProvisionFailed", properties);
+			    ContainerPlugin.sendEvent(Constants.AI_ACI_AGENT, "ProvisionFailed", properties)
 
 			    if (agent != null) {
-				agent.terminate();
+				agent.terminate()
 			    }
 
-			    provisionRetryStrategy.failure(template.getName());
+			    provisionRetryStrategy.failure(template.getName())
 
 			    throw new Exception(e)
 			}
