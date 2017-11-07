@@ -1,7 +1,7 @@
-package common.uline.jenkins
+package common.vj.jenkins
 
-import common.uline.jenkins.*
-import common.uline.jenkins.pipelines.CommonAzureJenkinsPipeline
+import common.vj.jenkins.*
+import common.vj.jenkins.pipelines.CommonAzureJenkinsPipeline
 
 def createCommonAzureJenkinsPipeline() {
 
