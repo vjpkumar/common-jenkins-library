@@ -120,8 +120,8 @@ String provisionAzureSlave() {
     echo "Containter TIMEOUT: "+template.getTimeout()
 	
     
-    AciAgent agent = new AciAgent(myCloud, template)
-    echo "AGENT NODE NAME: "+agent.getNodeName()
+    AciAgent agent1 = new AciAgent(myCloud, template)
+    echo "AGENT1 NODE NAME: "+agent1.getNodeName()
 	
     /**
     Collection<NodeProvisioner.PlannedNode> plannedNodes = myCloud.provision(null,1) 
