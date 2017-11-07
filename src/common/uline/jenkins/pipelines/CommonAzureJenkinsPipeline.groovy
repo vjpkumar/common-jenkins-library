@@ -95,8 +95,8 @@ String provisionAzureSlave() {
         
         echo " plannedNode Display Name: "+plannedNode.displayName
         
-        slave = plannedNode.displayName
-        
+        //slave = plannedNode.displayName
+        slave = baseTemplate.getLabel()
     }
         
     return slave
