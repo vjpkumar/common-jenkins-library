@@ -8,8 +8,16 @@ import com.microsoft.jenkins.containeragents.builders.AciCloudBuilder
 import com.microsoft.jenkins.containeragents.aci.AciCloud
 import com.microsoft.jenkins.containeragents.aci.AciAgent
 import com.microsoft.azure.util.AzureCredentials
+import com.microsoft.jenkins.containeragents.util.AzureContainerUtils
+import com.microsoft.jenkins.azurecommons.telemetry.AppInsightsConstants
 import com.microsoft.jenkins.containeragents.strategy.ContainerOnceRetentionStrategy
+import com.microsoft.jenkins.containeragents.strategy.ProvisionRetryStrategy
 import com.microsoft.azure.management.Azure
+import com.microsoft.azure.management.containerinstance.ContainerGroup
+import com.microsoft.jenkins.containeragents.ContainerPlugin
+import com.microsoft.jenkins.containeragents.util.Constants
+
+import org.apache.commons.lang3.time.StopWatch
 
 import hudson.model.Label
 import jenkins.model.Jenkins
@@ -22,10 +30,21 @@ import hudson.model.Node
 import hudson.slaves.Cloud
 import hudson.util.ListBoxModel
 
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeoutException
+
 import java.util.ArrayList
 import java.util.Collection
+import java.util.Collections
+import java.util.HashMap
+import java.util.List
+import java.util.Map
 
 String autoNodeLabel
+
+private transient ProvisionRetryStrategy provisionRetryStrategy = new ProvisionRetryStrategy()
 
 /**Constructor, called from PipelineBootstrap.createPipelineBuilder().*/
 void initialize() {
@@ -56,6 +75,8 @@ String provisionAzureSlave() {
     echo " HURRAY IN provisionAzureSlave "
     
     String slave
+	
+    
     
     def baseTemplate = new AciContainerTemplateBuilder()
         .withName("jnlpslave1")
@@ -95,23 +116,116 @@ String provisionAzureSlave() {
     AciContainerTemplate template = myCloud.getFirstTemplate(null)
     String templateName = template.getName()
     echo "Using ACI Container template: "+templateName
+    echo "Containter CPU: "+template.getCpu()
+    echo "Containter TIMEOUT: "+template.getTimeout()
+	
     
     AciAgent agent = new AciAgent(myCloud, template)
     echo "AGENT NODE NAME: "+agent.getNodeName()
 	
+    /**
     Collection<NodeProvisioner.PlannedNode> plannedNodes = myCloud.provision(null,1) 
-    echo " plannedNodes: "+plannedNodes
-    
-    for(NodeProvisioner.PlannedNode plannedNode: plannedNodes){
-        
-        echo " plannedNode Display Name: "+plannedNode.displayName
-	plannedNode.call()    
-        
-        //slave = plannedNode.displayName
+    echo " plannedNodes: "+plannedNodes    
+    for(NodeProvisioner.PlannedNode plannedNode: plannedNodes){        
+        echo " plannedNode Display Name: "+plannedNode.displayName	
         slave = baseTemplate.getLabel()
     }
-        
-    return slave
+    */
+	
+    NodeProvisioner.PlannedNode plannedNode = 
+	new NodeProvisioner.PlannedNode(
+	    template.getName(), 
+	    Computer.threadPoolForRemoting.submit(
+		new Callable<Node>() {
+		    @Override
+		    public Node call() throws Exception {
+			AciAgent agent = null;
+			final Map<String, String> properties = new HashMap<>();
+
+			try {
+			    agent = new AciAgent(AciCloud.this, template);
+			    
+			    echo "AGENT NODE NAME: "+agent.getNodeName()
+			    Jenkins.getInstance().addNode(agent);
+
+			    //start a timeWatcher
+			    StopWatch stopWatch = new StopWatch();
+			    stopWatch.start();
+
+			    //BI properties
+			    properties.put(AppInsightsConstants.AZURE_SUBSCRIPTION_ID,AzureCredentials.getServicePrincipal(myCloud.getCredentialsId()).getSubscriptionId());
+			    properties.put(Constants.AI_ACI_NAME, agent.getNodeName());
+			    properties.put(Constants.AI_ACI_CPU_CORE, template.getCpu());
+
+			    //Deploy ACI and wait
+			    template.provisionAgents(myCloud, agent, stopWatch);
+
+			    //wait JNLP to online
+			    waitToOnline(agent, template.getTimeout(), stopWatch);
+
+			    provisionRetryStrategy.success(template.getName());
+
+			    //Send BI
+			    ContainerPlugin.sendEvent(Constants.AI_ACI_AGENT, "Provision", properties);
+
+			    return agent
+			} catch (Exception e) {
+			    echo "EXCEPTION: "+e.getMessage()			    
+			    properties.put("Message", e.getMessage());
+			    ContainerPlugin.sendEvent(Constants.AI_ACI_AGENT, "ProvisionFailed", properties);
+
+			    if (agent != null) {
+				agent.terminate();
+			    }
+
+			    provisionRetryStrategy.failure(template.getName());
+
+			    throw new Exception(e)
+			}
+		    }
+		}
+		), 1)
+    
+     return slave
+}
+
+public Azure getAzureClient() throws Exception {
+	return AzureContainerUtils.getAzureClient("azurespn")
+}
+
+private void waitToOnline(AciAgent agent, int startupTimeout, StopWatch stopWatch) throws Exception {	
+	echo "WAITING AGENT ONLINE: "+agent.getNodeName()
+	Azure azureClient = getAzureClient()
+
+	while (true) {
+	    
+	   echo "WHILE TRUE : AGENT TOCOMPUTER "+agent.toComputer()
+		
+	    if (AzureContainerUtils.isTimeout(startupTimeout, stopWatch.getTime())) {
+		echo "WHILE TRUE : ACI container connection timeout"    
+		throw new TimeoutException("ACI container connection timeout")
+	    }
+
+	    if (agent.toComputer() == null) {
+		echo "WHILE TRUE : Agent node has been deleted"        
+		throw new IllegalStateException("Agent node has been deleted")
+	    }
+	    ContainerGroup containerGroup =
+		    azureClient.containerGroups().getByResourceGroup("demoJenkinsResourceGroup", agent.getNodeName())
+
+	    if (containerGroup.containers().containsKey(agent.getNodeName())
+		    && containerGroup.containers().get(agent.getNodeName()).instanceView().currentState().state()
+		    .equals("Terminated")) {
+		    echo "WHILE TRUE : ACI container terminated"        
+		throw new IllegalStateException("ACI container terminated")
+	    }
+
+	    if (agent.toComputer().isOnline()) {
+		break
+	    }
+	    final int retryInterval = 5 * 1000
+	    Thread.sleep(retryInterval)
+	}
 }
 
 void triggerCommonAzureJenkinsPipeline() {
