@@ -143,7 +143,7 @@ String provisionAzureSlave() {
 			final Map<String, String> properties = new HashMap<>();
 
 			try {
-			    agent = new AciAgent(AciCloud.this, template);
+			    agent = new AciAgent(myCloud, template);
 			    
 			    echo "AGENT NODE NAME: "+agent.getNodeName()
 			    Jenkins.getInstance().addNode(agent);
