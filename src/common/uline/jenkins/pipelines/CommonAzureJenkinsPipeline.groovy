@@ -1,6 +1,6 @@
-package common.uline.jenkins.pipelines
+package common.vj.jenkins.pipelines
 
-import common.uline.jenkins.steps.CommonPipelineSteps
+import common.vj.jenkins.steps.CommonPipelineSteps
 
 import com.microsoft.jenkins.containeragents.builders.AciContainerTemplateBuilder
 import com.microsoft.jenkins.containeragents.aci.AciContainerTemplate
