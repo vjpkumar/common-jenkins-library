@@ -44,7 +44,7 @@ void initialize() {
 
 void privisionAzureSlaveSH() {
     sh "echo 'Provisioning Slave....'"
-    sh 'az container create --image jenkinsci/jnlp-slave --name jenkinsjnlpslave1 --resource-group demoJenkinsResourceGroup --ip-address public --command-line "jenkins-slave -url http://ulinejenkins.eastus.cloudapp.azure.com:8080/ -workDir=/home/jenkins/agent  ac1311a88802ec4b302a2ff619ef83a0d1250a9877f901e13e572f9c5247e40e demolabel1"'
+    az container create --image jenkinsci/jnlp-slave --name jenkinsjnlpslave1 --resource-group demoJenkinsResourceGroup --ip-address public --command-line "jenkins-slave -url http://ulinejenkins.eastus.cloudapp.azure.com:8080/ -workDir=/home/jenkins/agent  ac1311a88802ec4b302a2ff619ef83a0d1250a9877f901e13e572f9c5247e40e demolabel1"
     autoNodeLabel="demolabel1"
 }
 
