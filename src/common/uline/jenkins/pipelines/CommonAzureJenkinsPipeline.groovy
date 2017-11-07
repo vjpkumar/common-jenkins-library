@@ -85,6 +85,9 @@ String provisionAzureSlave() {
     String templateName = template.getName()
     echo "Using ACI Container template: "+templateName
     
+    AciAgent agent = new AciAgent(myCloud, template)
+    echo "AGENT NODE NAME: "+agent.getNodeName()
+	
     Collection<NodeProvisioner.PlannedNode> plannedNodes = myCloud.provision(null,1) 
     echo " plannedNodes: "+plannedNodes
     
