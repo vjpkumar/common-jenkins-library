@@ -56,7 +56,7 @@ void initialize() {
     echo "###################################### GET NODE LABEL DYNAMICALLY ::: START #########################################################"
       
     //autoNodeLabel = provisionAzureSlave()
-     autoNodeLabel = "demolabel123"
+     autoNodeLabel = "cloud"
     
     echo "NODE LABEL IS: $autoNodeLabel"
     echo "###################################### GET NODE LABEL DYNAMICALLY ::: END ###########################################################"
